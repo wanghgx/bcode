@@ -1,0 +1,309 @@
+import java.io.*;
+import java.util.*;
+action code {:
+
+	static class declarator {
+		declarator(String name, boolean isarray, String leng, String start) {
+			this.name = name;
+			this.isarray = isarray;
+			this.leng = leng;
+			this.start = start;
+		}
+		String name;
+		boolean isarray;
+		boolean noparse;
+		String leng;
+		String start;
+	}
+	
+	static class classinfo {
+		String cn;
+		String sn;
+		StringBuilder ctorparams;
+		StringBuilder ctorargs;
+		List<String> ctorstmts = new ArrayList<String>();
+	}
+	
+	private static final File DIR = new File("src/java/whg/bcode/dom");
+	private static final String PACKAGE_NAME = "whg.bcode.dom";
+	private static final String NODE_CLASS = "whg.bcode.Node";
+	private static final String NODE_CLASS_PARAMS = "NodeFactory nf";
+	private static final String NODE_CLASS_ARGS = "nf";
+	
+	private final Map<String, String> ctorparamsMap = new HashMap<String, String>();
+	{
+		ctorparamsMap.put(NODE_CLASS, NODE_CLASS_PARAMS);
+	}
+	
+	private final Map<String, String> ctorargsMap = new HashMap<String, String>();
+	{
+		ctorargsMap.put(NODE_CLASS, NODE_CLASS_ARGS);
+	}
+	
+	private int fc = 0;
+	private String fn;
+	private PrintStream ps;
+	private PrintStream eps;
+	
+	private Stack<classinfo> stack = new Stack<classinfo>();
+	
+	private String prefix() {
+		int lvl = stack.size() - 1;
+		String prefix = "";
+		while (lvl-->0)
+			prefix += "\t";
+		return prefix;
+	}
+	
+	private void printf(String format, Object ... args) {
+		String prefix = prefix();
+		format = String.format("%s%s", prefix, format);
+		ps.printf(format, args);
+	}
+	
+	private void log(String format, Object ... args) {
+		System.err.printf(format, args);
+	}
+	
+	private void startfile(String cn) {
+		try {
+			fn = String.format("%s.java", cn);
+			log("%15s: %s\n", "start file", fn);
+			File file = new File(DIR, fn);
+			ps = new PrintStream(file, "UTF-8");
+			printf("package %s;\n", PACKAGE_NAME);
+			printf("import java.io.*;\n");
+			printf("import whg.bcode.*;\n");
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private void endfile() {
+	  	ps.close();
+	  	fn = null;
+	  	fc++;
+	}
+	
+	private void startenum(String cn) {
+		try {
+			String fn = String.format("%s.java", cn);
+			log("%15s: %s\n", "start enum", fn);
+			File file = new File(DIR, fn);
+			eps = new PrintStream(file, "UTF-8");
+			eps.printf("package %s;\n", PACKAGE_NAME);
+			eps.printf("public class %s {\n", cn);
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private void endenum() {
+		eps.printf("}\n");
+	  	eps.close();
+	}
+	
+	public void startclass(String cn, String sn) {
+		if (sn == null)
+			sn = NODE_CLASS;
+		classinfo classinfo = stack.push(new classinfo());
+		classinfo.cn = cn;
+		classinfo.sn = sn;
+		String modifiers = "";
+		if (stack.size() > 1)
+			modifiers = "static";
+		printf("public %s class %s extends %s {\n", modifiers, cn, sn);
+		String initCtorParams = ctorparamsMap.get(sn);
+		classinfo.ctorparams = new StringBuilder(initCtorParams==null?"":initCtorParams);
+		String initCtorArgs = ctorargsMap.get(sn);
+		classinfo.ctorargs = new StringBuilder(initCtorArgs==null?"":initCtorArgs);
+	}
+	
+	public void endclass() {
+		classinfo classinfo = stack.peek();
+		String ctorargs = ctorargsMap.get(classinfo.sn);
+		printf("\tpublic %s(%s) throws IOException {\n", classinfo.cn, classinfo.ctorparams.toString());
+		printf("\t\tsuper(%s);\n", ctorargs);
+		for (String stmt : classinfo.ctorstmts) {
+			printf("\t\t%s\n", stmt);
+		}
+		printf("\t}\n");
+		printf("}\n");
+		ctorparamsMap.put(classinfo.cn, classinfo.ctorparams.toString());
+		ctorargsMap.put(classinfo.cn, classinfo.ctorargs.toString());
+		stack.pop();
+	}
+:};
+terminal 			LBRACE, RBRACE, SEMICOLON, LBRACKET, RBRACKET, AT, MINUS, EXTENDS, COLON, EQ, AST, COMMA;
+terminal String 	U4, U2, U1, IDENTIFIER, STRING;
+terminal int	 	NUMBER;
+non terminal 				input, composite_type, declaration_list, domain, const_list, const;
+non terminal 				member_list, member, top_declaration, enum, enum_body;
+non terminal String			declaration, header, type_specifier, expr;
+non terminal String[]		leng;
+non terminal declarator 	declarator, xdeclarator;
+start with input;
+
+input ::=
+	  declaration_list
+	  {: log("%15s: %d\n", "file count", fc); :}
+	;
+
+declaration_list ::=
+	  top_declaration:d
+	| declaration_list top_declaration:d
+	;
+
+top_declaration ::=
+	  declaration
+	  {:
+	  	log("%15s: %s\n", "end file", fn);
+	  	endfile();
+	  :}
+	;
+
+declaration ::=
+	  header:h composite_type
+	  {:
+	  	RESULT = h;
+		log("%15s\n", "end class");
+		endclass();
+	  :}
+	;
+
+header ::=
+	  IDENTIFIER:cn
+	  {:
+	  	RESULT = cn;
+	  	if (fn == null) {
+	  		startfile(cn);
+	  	}
+	  	log("%15s: %s\n", "start class", cn);
+	  	startclass(cn, null);
+	  :}
+	| IDENTIFIER:cn EXTENDS IDENTIFIER:sn
+	  {:
+	  	RESULT = cn;
+	  	if (fn == null) {
+			startfile(cn);
+	  	}
+	  	log("%15s: %s\n", "start class", cn);
+	  	startclass(cn, sn);
+	  :}
+	;
+
+type_specifier ::=
+	  declaration:n {: RESULT = n; :}
+	| U4:n {: RESULT = n; :}
+	| U2:n {: RESULT = n; :}
+	| U1:n {: RESULT = n; :}
+	| IDENTIFIER:n {: RESULT = n; :}
+	;
+
+composite_type ::=
+	  LBRACE RBRACE
+	| LBRACE member_list RBRACE
+	;
+
+member_list ::=
+	  member
+	| member_list member
+	;
+
+member ::=
+	  type_specifier:t xdeclarator:d domain:m SEMICOLON
+	  {:
+	  	String type = t;
+	  	if ("u4".equals(t)) {
+	  		type = "int" + (d.isarray?"[]":"");
+	  	} else if ("u2".equals(t)) {
+	  		type = "int" + (d.isarray?"[]":"");
+	  	} else if ("u1".equals(t)) {
+	  		type = d.isarray?"byte[]":"int";
+	  	} else {
+	  		type = t + (d.isarray?"[]":"");
+	  	}
+		String decl = String.format("%s %s", type, d.name);
+		printf("\tpublic %s;\n", decl);
+		if (d.noparse) {
+			stack.peek().ctorparams.append(String.format(", %s", decl));
+			stack.peek().ctorargs.append(String.format(", %s", d.name));
+			String stmt = String.format("this.%s = %s;", d.name, d.name);
+			stack.peek().ctorstmts.add(stmt);
+		} else {
+			String stmt = null;
+			if (d.isarray) {
+			  	if ("u4".equals(t)) {
+			  		type = "int";
+			  	} else if ("u2".equals(t)) {
+			  		type = "short";
+			  	} else if ("u1".equals(t)) {
+			  		type = "byte";
+			  	} else {
+			  		type = t;
+			  	}
+				stmt = String.format("array(%s.class, \"%s\", %s, %s);", type, d.name, d.leng, d.start);
+			} else if ("double".equals(t)) {
+				stmt = String.format("this.%s = nf.readDouble();", d.name);
+			} else if ("long".equals(t)) {
+				stmt = String.format("this.%s = nf.readLong();", d.name);
+			} else if ("float".equals(t)) {
+				stmt = String.format("this.%s = nf.readFloat();", d.name);
+			} else if ("int".equals(t)) {
+				stmt = String.format("this.%s = nf.readInt();", d.name);
+			} else if ("String".equals(t)) {
+				stmt = String.format("this.%s = nf.readUtf8();", d.name);
+			} else {
+				stmt = String.format("%s(\"%s\");", t, d.name);
+			}
+			stack.peek().ctorstmts.add(stmt);
+		}
+	  :}
+	;
+
+domain ::=
+	| EQ enum
+	| AST enum
+	;
+
+enum ::=
+	  IDENTIFIER:id {: startenum(id); :} enum_body {: endenum(); :}
+	;
+
+enum_body ::=
+	  LBRACE RBRACE
+	| LBRACE const_list RBRACE
+	;
+
+const_list ::=
+	  const
+	| const_list COMMA const
+	;
+
+const ::=
+	  STRING:s
+	  {: eps.printf("\tpublic static final String %s = %s;\n", s.substring(1,s.length()-1), s); :}
+	| IDENTIFIER:id EQ NUMBER:n
+	  {: eps.printf("\tpublic static final int %s = %d;\n", id, n); :}
+	;
+
+xdeclarator ::=
+	  declarator:d {: RESULT = d; :}
+	| AT declarator:d {: RESULT = d; d.noparse = true; :}
+	;
+
+declarator ::=
+	  IDENTIFIER:n {: RESULT = new declarator(n, false, null, null); :}
+	| IDENTIFIER:n LBRACKET leng:l RBRACKET {: RESULT = new declarator(n, true, l[0], l[1]); :}
+	;
+
+leng ::=
+	  expr:n {: RESULT = new String[] {n, "0"}; :}
+	| expr:n1 COLON NUMBER:n2 {: RESULT = new String[] {n1, ""+n2}; :}
+	;
+
+expr ::=
+	  NUMBER:n {: RESULT = ""+n; :}
+	| IDENTIFIER:n {: RESULT = n; :}
+	| IDENTIFIER:n1 MINUS NUMBER:n2 {: RESULT = String.format("%s-%s", n1, ""+n2); :}
+	;

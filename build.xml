@@ -1,0 +1,51 @@
+<project>
+	<taskdef classname="jflex.anttask.JFlexTask" name="jflex" classpath="${basedir}/lib-compile/jflex-1.6.0.jar" />
+	<taskdef name="cup" classname="java_cup.anttask.CUPTask" classpath="${basedir}/lib-compile/java-cup-11b.jar" />
+	<target name="jflex">
+		<touch file="${basedir}/meta/bcode.jflex" />
+		<copy file="${basedir}/meta/bcode.jflex" tofile="${basedir}/meta/bcode_filtered.jflex">
+			<filterset begintoken="/*" endtoken="*/">
+				<filter token="${debug}" value="%${debug}" />
+			</filterset>
+		</copy>
+		<jflex file="${basedir}/meta/bcode_filtered.jflex" destdir="${basedir}/src/java" />
+	</target>
+	<target name="cup">
+		<cup srcfile="${basedir}/meta/bcode.cup" destdir="${basedir}/src/java/whg/bcode" package="whg.bcode" interface="true" force="true" />
+	</target>
+	<target name="gen" depends="cup,jflex" />
+	<target name="compile" depends="gen">
+		<javac srcdir="${basedir}/src/java" destdir="${basedir}/bin" includeantruntime="false">
+			<classpath>
+				<fileset dir="${basedir}/lib">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+			<include name="**/parser.java" />
+			<include name="**/lexer.java" />
+			<include name="**/sym.java" />
+		</javac>
+	</target>
+	<target name="debug-lexer" depends="compile">
+		<java classname="whg.bcode.lexer">
+			<classpath>
+				<fileset dir="${basedir}/lib">
+					<include name="*.jar" />
+				</fileset>
+				<pathelement location="${basedir}/bin" />
+			</classpath>
+			<arg value="${basedir}/meta/Generator.input" />
+		</java>
+	</target>
+	<target name="debug-parser" depends="compile">
+		<java classname="whg.bcode.ParserTest">
+			<classpath>
+				<fileset dir="${basedir}/lib">
+					<include name="*.jar" />
+				</fileset>
+				<pathelement location="${basedir}/bin" />
+			</classpath>
+			<arg value="${basedir}/meta/Generator.input" />
+		</java>
+	</target>
+</project>
