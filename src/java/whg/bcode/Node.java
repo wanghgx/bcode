@@ -79,19 +79,21 @@ public abstract class Node {
 					array = Array.newInstance(elemtype, arraylen);
 				}
 				for (int i = start; i < arraylen; i++) {
-					log.logSub(arrayname, i);
 					Object elem = null;
-					log.inc();
 					if (elemtype == int.class) {
 						int u4 = nf.u4();
+						log.logSub(arrayname, i, u4);
 						elem = u4;
 					} else if (elemtype == short.class) {
 						int u2 = nf.u2();
+						log.logSub(arrayname, i, u2);
 						elem = u2;
 					} else {
+						log.logSub(arrayname, i);
+						log.inc();
 						elem = method.invoke(nf);
+						log.dec();
 					}
-					log.dec();
 					Array.set(array, i, elem);
 					if ("constant_pool".equals(arrayname)
 							&& (elem instanceof CONSTANT_Double_info || elem instanceof CONSTANT_Long_info)) {

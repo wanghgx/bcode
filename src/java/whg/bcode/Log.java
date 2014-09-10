@@ -48,6 +48,11 @@ public class Log {
 		logStr(label, "");
 	}
 
+	public void logSub(String label, int idx, int val) {
+		label = String.format("%s[%d]", label, idx);
+		logDec(label, val);
+	}
+
 	public void logCpTag(int tag) {
 		String label = "tag";
 		String value = String.format("%d - %s", tag, CPTAG.name(tag));
