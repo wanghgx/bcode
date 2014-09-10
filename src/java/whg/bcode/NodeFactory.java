@@ -77,10 +77,15 @@ import whg.bcode.dom.variable_info_Uninitialized;
 import whg.bcode.dom.variable_info_UninitializedThis;
 import whg.bcode.dom.verification_type_info;
 
-public class NodeFactory {
+public class NodeFactory implements IConstantPool {
 
 	private DataInputStream di;
 	private ClassFile classFile;
+	private Log log = new Log(this);
+
+	public Log getLog() {
+		return log;
+	}
 
 	public NodeFactory(DataInputStream di) {
 		this.di = di;
@@ -109,6 +114,7 @@ public class NodeFactory {
 		return bytes;
 	}
 
+	@Override
 	public cp_info constant_pool(int idx) {
 		return classFile.constant_pool[idx];
 	}
@@ -122,7 +128,9 @@ public class NodeFactory {
 	}
 
 	public int readInt() throws IOException {
-		return di.readInt();
+		int intVal = di.readInt();
+		log.logDec("value", intVal);
+		return intVal;
 	}
 
 	public long readLong() throws IOException {
@@ -132,7 +140,9 @@ public class NodeFactory {
 	public String readUtf8() throws IOException {
 		int len = u2();
 		byte[] bytes = bytes(len);
-		return new String(bytes, "UTF-8");
+		String utf8 = new String(bytes, "UTF-8");
+		log.logStr("value", utf8);
+		return utf8;
 	}
 
 	public String resolveUtf8(int idx) {
@@ -143,7 +153,9 @@ public class NodeFactory {
 	public attribute_info attribute_info() throws IOException {
 		attribute_info attribute_info = null;
 		int attribute_name_index = this.u2();
+		log.logUtf8Ptr("attribute_name_index", attribute_name_index);
 		int attribute_length = this.u4();
+		log.logDec("attribute_length", attribute_length);
 		String attribute_name = this.resolveUtf8(attribute_name_index);
 		if (ATTRNAME.ConstantValue.equals(attribute_name)) {
 			attribute_info = new attribute_ConstantValue(this,
@@ -249,6 +261,7 @@ public class NodeFactory {
 	public cp_info cp_info() throws IOException {
 		cp_info cp_info = null;
 		int tag = this.u1();
+		log.logCpTag(tag);
 		switch (tag) {
 		case CPTAG.Class:
 			cp_info = new CONSTANT_Class_info(this, tag);
@@ -408,4 +421,9 @@ public class NodeFactory {
 	public element_value_pair element_value_pair() throws IOException {
 		return new element_value_pair(this);
 	}
+
+	//
+	//
+	//
+
 }

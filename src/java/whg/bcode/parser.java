@@ -253,7 +253,13 @@ class CUP$parser$actions {
 			File file = new File(DIR, fn);
 			eps = new PrintStream(file, "UTF-8");
 			eps.printf("package %s;\n", PACKAGE_NAME);
+			eps.printf("import java.util.HashMap;\n");
+			eps.printf("import java.util.Map;\n");
 			eps.printf("public class %s {\n", cn);
+			eps.printf("\tprivate static Map<Object, String> nameMap = new HashMap<Object, String>();\n");
+			eps.printf("\tpublic static String name(Object key) {\n");
+			eps.printf("\t\treturn nameMap.get(key);\n");
+			eps.printf("\t}\n");
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -703,7 +709,10 @@ class CUP$parser$actions {
 		Location nxleft = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)CUP$parser$stack.peek()).xleft;
 		Location nxright = ((java_cup.runtime.ComplexSymbolFactory.ComplexSymbol)CUP$parser$stack.peek()).xright;
 		int n = (int)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		 eps.printf("\tpublic static final int %s = %d;\n", id, n); 
+		 
+	  	eps.printf("\tpublic static final int %s = %d;\n", id, n); 
+	  	eps.printf("\tstatic { nameMap.put(%d, \"%s\"); }\n", n, id); 
+	  
               CUP$parser$result = parser.getSymbolFactory().newSymbol("const",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;

@@ -92,7 +92,13 @@ action code {:
 			File file = new File(DIR, fn);
 			eps = new PrintStream(file, "UTF-8");
 			eps.printf("package %s;\n", PACKAGE_NAME);
+			eps.printf("import java.util.HashMap;\n");
+			eps.printf("import java.util.Map;\n");
 			eps.printf("public class %s {\n", cn);
+			eps.printf("\tprivate static Map<Object, String> nameMap = new HashMap<Object, String>();\n");
+			eps.printf("\tpublic static String name(Object key) {\n");
+			eps.printf("\t\treturn nameMap.get(key);\n");
+			eps.printf("\t}\n");
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -284,7 +290,10 @@ const ::=
 	  STRING:s
 	  {: eps.printf("\tpublic static final String %s = %s;\n", s.substring(1,s.length()-1), s); :}
 	| IDENTIFIER:id EQ NUMBER:n
-	  {: eps.printf("\tpublic static final int %s = %d;\n", id, n); :}
+	  {: 
+	  	eps.printf("\tpublic static final int %s = %d;\n", id, n); 
+	  	eps.printf("\tstatic { nameMap.put(%d, \"%s\"); }\n", n, id); 
+	  :}
 	;
 
 xdeclarator ::=

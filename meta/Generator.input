@@ -84,7 +84,17 @@ CONSTANT_Utf8_info extends cp_info {
 }
 
 CONSTANT_MethodHandle_info extends cp_info {
-       u1 reference_kind;
+       u1 reference_kind = REFKIND {
+			getField = 1,
+			getStatic = 2,
+			putField = 3,
+			putStatic = 4,
+			invokeVirtual = 5,
+			invokeStatic = 6,
+			invokeSpecial = 7,
+			newInvokeSpecial = 8,
+			invokeInterface = 9
+		};
        u2 reference_index;
 }
 
