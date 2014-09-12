@@ -81,14 +81,19 @@ public class NodeFactory implements IConstantPool {
 
 	private DataInputStream di;
 	private ClassFile classFile;
-	private Log log = new Log(this);
+	private Log log;
 
 	public Log getLog() {
 		return log;
 	}
 
 	public NodeFactory(DataInputStream di) {
+		this(di, false);
+	}
+
+	public NodeFactory(DataInputStream di, boolean dolog) {
 		this.di = di;
+		this.log = new Log(this, dolog);
 	}
 
 	public void setClassFile(ClassFile classFile) {

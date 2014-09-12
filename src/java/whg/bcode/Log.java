@@ -9,9 +9,11 @@ public class Log {
 	private int lvl = 1;
 	private int width = 29;
 	private IConstantPool cp;
+	private boolean enabled;
 
-	public Log(IConstantPool cp) {
+	public Log(IConstantPool cp, boolean enabled) {
 		this.cp = cp;
+		this.enabled = enabled;
 	}
 
 	public void logU4(String label, int u4) {
@@ -40,7 +42,8 @@ public class Log {
 	}
 
 	public void logStr(String label, String str) {
-		System.out.printf("%" + (lvl * width) + "s: %s\n", label, str);
+		if (enabled)
+			System.out.printf("%" + (lvl * width) + "s: %s\n", label, str);
 	}
 
 	public void logSub(String label, int idx) {

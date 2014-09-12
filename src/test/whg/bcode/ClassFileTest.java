@@ -14,6 +14,10 @@ import whg.bcode.dom.ClassFile;
 
 public class ClassFileTest {
 	public static void main(String[] args) throws IOException {
+		boolean verbose = false;
+		if (args.length > 0 && "-v".equals(args[0])) {
+			verbose = true;
+		}
 		File listfile = new File("classlist.txt");
 		InputStream input = new FileInputStream(listfile);
 		Reader reader = new InputStreamReader(input);
@@ -24,7 +28,7 @@ public class ClassFileTest {
 			if (line == null) {
 				break;
 			}
-			parse(++count, line);
+			parse(++count, line, verbose);
 		}
 		System.out.println("count: " + count);
 		breader.close();
@@ -32,7 +36,7 @@ public class ClassFileTest {
 		input.close();
 	}
 
-	private static void parse(int index, String fn) {
+	private static void parse(int index, String fn, boolean verbose) {
 		System.out.printf("%5d %s ...", index, fn);
 		InputStream input = null;
 		DataInputStream dataInput = null;
@@ -40,7 +44,7 @@ public class ClassFileTest {
 			File file = new File(fn);
 			input = new FileInputStream(file);
 			dataInput = new DataInputStream(input);
-			NodeFactory nf = new NodeFactory(dataInput);
+			NodeFactory nf = new NodeFactory(dataInput, verbose);
 			new ClassFile(nf);
 			System.out.println("DONE");
 		} catch (FileNotFoundException e) {
