@@ -579,15 +579,15 @@ class CUP$parser$actions {
 			  	}
 				stmt = String.format("array(%s.class, \"%s\", %s, %s);", type, d.name, d.leng, d.start);
 			} else if ("double".equals(t)) {
-				stmt = String.format("this.%s = nf.readDouble();", d.name);
+				stmt = String.format("doubleValue(\"%s\");", d.name);
 			} else if ("long".equals(t)) {
-				stmt = String.format("this.%s = nf.readLong();", d.name);
+				stmt = String.format("longValue(\"%s\");", d.name);
 			} else if ("float".equals(t)) {
-				stmt = String.format("this.%s = nf.readFloat();", d.name);
+				stmt = String.format("floatValue(\"%s\");", d.name);
 			} else if ("int".equals(t)) {
-				stmt = String.format("this.%s = nf.readInt();", d.name);
+				stmt = String.format("intValue(\"%s\");", d.name);
 			} else if ("String".equals(t)) {
-				stmt = String.format("this.%s = nf.readUtf8();", d.name);
+				stmt = String.format("utf8Value(\"%s\");", d.name);
 			} else {
 				stmt = String.format("%s(\"%s\");", t, d.name);
 			}

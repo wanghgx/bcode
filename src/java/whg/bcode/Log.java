@@ -1,6 +1,5 @@
 package whg.bcode;
 
-import whg.bcode.dom.CONSTANT_Utf8_info;
 import whg.bcode.dom.CPTAG;
 import whg.bcode.dom.REFKIND;
 
@@ -8,11 +7,9 @@ public class Log {
 
 	private int lvl = 1;
 	private int width = 29;
-	private IConstantPool cp;
 	private boolean enabled;
 
-	public Log(IConstantPool cp, boolean enabled) {
-		this.cp = cp;
+	public Log(boolean enabled) {
 		this.enabled = enabled;
 	}
 
@@ -80,11 +77,8 @@ public class Log {
 		lvl--;
 	}
 
-	public void logUtf8Ptr(String label, int attribute_name_index) {
-		CONSTANT_Utf8_info utf8_info = (CONSTANT_Utf8_info) cp
-				.constant_pool(attribute_name_index);
-		String utf8 = utf8_info.value;
-		String value = String.format("#%d - %s", attribute_name_index, utf8);
+	public void logUtf8Ptr(String label, int ptr, String utf8) {
+		String value = String.format("#%d - %s", ptr, utf8);
 		logStr(label, value);
 	}
 

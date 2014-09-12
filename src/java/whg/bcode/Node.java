@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 
 import whg.bcode.dom.CONSTANT_Double_info;
 import whg.bcode.dom.CONSTANT_Long_info;
-import whg.bcode.dom.ClassFile;
 import whg.bcode.dom.annotation;
+import whg.bcode.dom.cp_info;
 import whg.bcode.dom.element_value;
 
 public abstract class Node {
@@ -103,7 +103,7 @@ public abstract class Node {
 			}
 			setField(arrayname, array);
 			if ("constant_pool".equals(arrayname)) {
-				nf.setClassFile((ClassFile) this);
+				nf.setConstantPool((cp_info[]) array);
 			}
 			return array;
 		} catch (Exception e) {
@@ -125,4 +125,33 @@ public abstract class Node {
 		return value;
 	}
 
+	protected double doubleValue(String name) throws IOException {
+		double value = nf.readDouble();
+		setField(name, value);
+		return value;
+	}
+
+	protected float floatValue(String name) throws IOException {
+		float value = nf.readFloat();
+		setField(name, value);
+		return value;
+	}
+
+	protected long longValue(String name) throws IOException {
+		long value = nf.readLong();
+		setField(name, value);
+		return value;
+	}
+
+	protected int intValue(String name) throws IOException {
+		int value = nf.readInt();
+		setField(name, value);
+		return value;
+	}
+
+	protected String utf8Value(String name) throws IOException {
+		String value = nf.readUtf8();
+		setField(name, value);
+		return value;
+	}
 }

@@ -19,13 +19,13 @@ import whg.bcode.dom.CONSTANT_NameAndType_info;
 import whg.bcode.dom.CONSTANT_String_info;
 import whg.bcode.dom.CONSTANT_Utf8_info;
 import whg.bcode.dom.CPTAG;
-import whg.bcode.dom.ClassFile;
 import whg.bcode.dom.annotation;
 import whg.bcode.dom.annotation.element_value_pair;
 import whg.bcode.dom.attribute_AnnotationDefault;
 import whg.bcode.dom.attribute_BootstrapMethods;
 import whg.bcode.dom.attribute_BootstrapMethods.bootstrap_method;
 import whg.bcode.dom.attribute_Code;
+import whg.bcode.dom.attribute_Code.exception;
 import whg.bcode.dom.attribute_ConstantValue;
 import whg.bcode.dom.attribute_Deprecated;
 import whg.bcode.dom.attribute_EnclosingMethod;
@@ -77,10 +77,14 @@ import whg.bcode.dom.variable_info_Uninitialized;
 import whg.bcode.dom.variable_info_UninitializedThis;
 import whg.bcode.dom.verification_type_info;
 
-public class NodeFactory implements IConstantPool {
+public class NodeFactory {
+
+	// --------------------------------------------------------------------------------
+	// misc
+	// --------------------------------------------------------------------------------
 
 	private DataInputStream di;
-	private ClassFile classFile;
+	private cp_info[] constant_pool;
 	private Log log;
 
 	public Log getLog() {
@@ -91,14 +95,23 @@ public class NodeFactory implements IConstantPool {
 		this(di, false);
 	}
 
-	public NodeFactory(DataInputStream di, boolean dolog) {
+	public NodeFactory(DataInputStream di, boolean verbose) {
 		this.di = di;
-		this.log = new Log(this, dolog);
+		this.log = new Log(verbose);
 	}
 
-	public void setClassFile(ClassFile classFile) {
-		this.classFile = classFile;
+	public void setConstantPool(cp_info[] constant_pool) {
+		this.constant_pool = constant_pool;
 	}
+
+	private String resolveUtf8(int idx) {
+		CONSTANT_Utf8_info utf8 = (CONSTANT_Utf8_info) constant_pool[idx];
+		return utf8.value;
+	}
+
+	// --------------------------------------------------------------------------------
+	// elementary read
+	// --------------------------------------------------------------------------------
 
 	public int u4() throws IOException {
 		return di.readInt();
@@ -119,11 +132,6 @@ public class NodeFactory implements IConstantPool {
 		return bytes;
 	}
 
-	@Override
-	public cp_info constant_pool(int idx) {
-		return classFile.constant_pool[idx];
-	}
-
 	public double readDouble() throws IOException {
 		return di.readDouble();
 	}
@@ -133,9 +141,7 @@ public class NodeFactory implements IConstantPool {
 	}
 
 	public int readInt() throws IOException {
-		int intVal = di.readInt();
-		log.logDec("value", intVal);
-		return intVal;
+		return di.readInt();
 	}
 
 	public long readLong() throws IOException {
@@ -146,22 +152,21 @@ public class NodeFactory implements IConstantPool {
 		int len = u2();
 		byte[] bytes = bytes(len);
 		String utf8 = new String(bytes, "UTF-8");
-		log.logStr("value", utf8);
 		return utf8;
 	}
 
-	public String resolveUtf8(int idx) {
-		CONSTANT_Utf8_info utf8 = (CONSTANT_Utf8_info) constant_pool(idx);
-		return utf8.value;
-	}
+	// ----------------------------------------------------------------------
+	// factory methods
+	// ----------------------------------------------------------------------
 
 	public attribute_info attribute_info() throws IOException {
 		attribute_info attribute_info = null;
 		int attribute_name_index = this.u2();
-		log.logUtf8Ptr("attribute_name_index", attribute_name_index);
+		String attribute_name = this.resolveUtf8(attribute_name_index);
+		log.logUtf8Ptr("attribute_name_index", attribute_name_index,
+				attribute_name);
 		int attribute_length = this.u4();
 		log.logDec("attribute_length", attribute_length);
-		String attribute_name = this.resolveUtf8(attribute_name_index);
 		if (ATTRNAME.ConstantValue.equals(attribute_name)) {
 			attribute_info = new attribute_ConstantValue(this,
 					attribute_name_index, attribute_length);
@@ -233,6 +238,7 @@ public class NodeFactory implements IConstantPool {
 	public element_value element_value() throws IOException {
 		element_value element_value = null;
 		int tag = this.u1();
+		log.logDec("tag", tag);
 		switch (tag) {
 		case 'B':
 		case 'C':
@@ -325,7 +331,7 @@ public class NodeFactory implements IConstantPool {
 	}
 
 	public attribute_Code.exception exception() throws IOException {
-		return new attribute_Code.exception(this);
+		return new exception(this);
 	}
 
 	public bootstrap_method bootstrap_method() throws IOException {
@@ -360,6 +366,7 @@ public class NodeFactory implements IConstantPool {
 		stack_map_frame stack_map_frame = null;
 		//
 		int frame_type = this.u1();
+		log.logDec("frame_type", frame_type);
 		if (0 <= frame_type && frame_type <= 63) {
 			stack_map_frame = new smf_same_frame(this, frame_type);
 		} else if (64 <= frame_type && frame_type <= 127) {
@@ -388,6 +395,7 @@ public class NodeFactory implements IConstantPool {
 		verification_type_info verification_type_info = null;
 		//
 		int tag = this.u1();
+		log.logDec("tag", tag);
 		switch (tag) {
 		case 0:
 			verification_type_info = new variable_info_Top(this, tag);
@@ -426,9 +434,5 @@ public class NodeFactory implements IConstantPool {
 	public element_value_pair element_value_pair() throws IOException {
 		return new element_value_pair(this);
 	}
-
-	//
-	//
-	//
 
 }
