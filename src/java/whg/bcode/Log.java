@@ -82,4 +82,9 @@ public class Log {
 		logStr(label, value);
 	}
 
+	public void logFlt(String label, double doubleValue) {
+		String value = String.format("%f", doubleValue);
+		logStr(label, value);
+	}
+
 }

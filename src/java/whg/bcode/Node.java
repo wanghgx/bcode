@@ -127,30 +127,35 @@ public abstract class Node {
 
 	protected double doubleValue(String name) throws IOException {
 		double value = nf.readDouble();
+		log.logFlt("value", value);
 		setField(name, value);
 		return value;
 	}
 
 	protected float floatValue(String name) throws IOException {
 		float value = nf.readFloat();
+		log.logFlt("value", value);
 		setField(name, value);
 		return value;
 	}
 
 	protected long longValue(String name) throws IOException {
 		long value = nf.readLong();
+		log.logDec("value", value);
 		setField(name, value);
 		return value;
 	}
 
 	protected int intValue(String name) throws IOException {
 		int value = nf.readInt();
+		log.logDec("value", value);
 		setField(name, value);
 		return value;
 	}
 
 	protected String utf8Value(String name) throws IOException {
 		String value = nf.readUtf8();
+		log.logStr("value", value);
 		setField(name, value);
 		return value;
 	}
